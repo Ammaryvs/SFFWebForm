@@ -1,0 +1,315 @@
+<title>Booth Lead Triage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --accent:#005EB8; --accent-soft:#E3EDF8;
+  --hot:#C7383D; --warm:#B25E12; --qual:#1F7A4D; --expl:#5A6577;
+  --ground:#F4F6FA; --surface:#FFFFFF; --surface-2:#EDF1F7;
+  --ink:#0F141C; --ink-2:#48546A; --ink-3:#77839A; --line:#DBE2ED;
+  --stage:#0A0D13; --stage-edge:#2A3242;
+  --ui:'Archivo',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+ :root:not([data-theme="light"]){
+  --accent:#4D9BE0; --accent-soft:#132435;
+  --hot:#F26E72; --warm:#E0954A; --qual:#4CC38A; --expl:#8894A8;
+  --ground:#0F141C; --surface:#18202C; --surface-2:#212B3A;
+  --ink:#E4E9F2; --ink-2:#A3AFC2; --ink-3:#77839A; --line:#2A3444;
+ }
+}
+:root[data-theme="dark"]{
+  --accent:#4D9BE0; --accent-soft:#132435;
+  --hot:#F26E72; --warm:#E0954A; --qual:#4CC38A; --expl:#8894A8;
+  --ground:#0F141C; --surface:#18202C; --surface-2:#212B3A;
+  --ink:#E4E9F2; --ink-2:#A3AFC2; --ink-3:#77839A; --line:#2A3444;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--ui);line-height:1.55;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(24px,3.4vw,34px)/1.15 var(--ui);margin:6px 0 8px;letter-spacing:-.02em;text-wrap:balance}
+.lede{margin:0 0 20px;color:var(--ink-2);max-width:66ch;font-size:15px}
+
+.rail{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:12px;margin:0 0 24px;
+ background:var(--surface);border:1px solid var(--line);border-radius:12px;position:sticky;top:0;z-index:30}
+.rail b{font:500 10px/1 var(--mono);letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.tog,.seg button{font-family:var(--ui);font-size:13px;cursor:pointer}
+.tog{color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 11px}
+.tog[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.tog:focus-visible,.seg button:focus-visible,.vcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:7px 13px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+
+.frames{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+.vcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;
+       display:flex;flex-direction:column;gap:10px}
+.vhead{display:flex;align-items:baseline;gap:9px}
+.vkey{font:700 13px/1 var(--mono);color:#fff;background:var(--accent);border-radius:6px;padding:5px 8px}
+.vname{font-weight:600;font-size:15px}
+.vtrade{font-size:12.5px;color:var(--ink-2);margin:0}
+.holder{display:flex;justify-content:center;background:var(--stage);border-radius:10px;padding:14px 0}
+.phone{position:relative;width:390px;height:780px;background:#000;border-radius:22px;overflow:hidden;
+ flex:none;box-shadow:0 0 0 6px var(--stage-edge);transform-origin:top center}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--ground);overflow:hidden}
+
+/* ---- in-phone chrome ---- */
+.topbar{flex:none;padding:9px 12px;background:var(--surface);border-bottom:1px solid var(--line);
+        display:flex;align-items:center;gap:8px;font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.ok{background:var(--qual)} .dot.bad{background:var(--hot)}
+.stale{color:var(--ink-3);font:500 11px var(--mono);margin-left:auto}
+.stale.warn{color:var(--hot)}
+.banner{flex:none;background:var(--hot);color:#fff;padding:11px 12px;display:flex;gap:10px;align-items:center}
+.banner .b1{font-weight:700;font-size:13px;line-height:1.3}
+.banner .b2{font-size:11.5px;opacity:.92}
+.banner button{margin-left:auto;flex:none;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);
+ color:#fff;border-radius:7px;padding:8px 11px;font:600 12px var(--ui);cursor:pointer;min-height:40px}
+.list{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px}
+
+.lead{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:11px 12px;
+      display:flex;flex-direction:column;gap:7px;cursor:pointer}
+.lead.done{opacity:.5}
+.lead .row1{display:flex;align-items:center;gap:8px}
+.pill{font:700 10px/1 var(--mono);letter-spacing:.06em;color:#fff;border-radius:5px;padding:4px 6px;flex:none}
+.pill.HOT{background:var(--hot)} .pill.WARM{background:var(--warm)}
+.pill.QUALIFIED{background:var(--qual)} .pill.EXPLORATORY{background:var(--expl)}
+.score{font:600 13px var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);margin-left:auto}
+.who{font-weight:600;font-size:13.5px;line-height:1.25}
+.org{font-size:11.5px;color:var(--ink-2)}
+.meta{font-size:11.5px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 10px}
+.meta b{color:var(--ink);font-weight:600}
+.action{font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:7px;
+        padding:7px 9px;font-weight:600}
+.stripe{height:3px;border-radius:2px;flex:none}
+.mark{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:8px;
+ padding:9px;font:600 12px var(--ui);cursor:pointer;min-height:42px;width:100%}
+.mark[data-done="1"]{background:var(--qual);border-color:var(--qual);color:#fff}
+.brk{font:400 11px/1.6 var(--mono);color:var(--ink-2);background:var(--surface-2);border-radius:7px;padding:8px}
+.sechead{font:500 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+         padding:2px 2px 0}
+.empty{margin:auto;text-align:center;color:var(--ink-3);font-size:13px;padding:24px}
+.pager{flex:none;display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
+.pager button{flex:1;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+ border-radius:8px;padding:11px;font:600 13px var(--ui);cursor:pointer;min-height:44px}
+
+section.notes{margin-top:34px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.note h3{margin:0 0 8px;font-size:15px;font-weight:600}
+.note p{margin:0 0 9px;font-size:13.5px;color:var(--ink-2)} .note p:last-child{margin:0}
+.note strong{color:var(--ink)}
+.tag{display:inline-block;font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+ padding:4px 7px;border-radius:5px;background:var(--accent-soft);color:var(--accent);margin-bottom:9px}
+.tag.w{background:rgba(199,56,61,.12);color:var(--hot)}
+h2.sect{font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+ margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+footer{margin-top:38px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
+</style>
+
+<div class="wrap">
+<span class="eyebrow">Ticket 09 · decided</span>
+<h1>Booth Lead Triage</h1>
+<p class="lede">Settled on <strong>C — Triage split</strong>, on staff phones. A and B are kept for the
+record. The simulator matters more than the layout: press <strong>Busy afternoon</strong> to see why the
+working list has to age out, and drop the connection to see what a broken booth looks like.</p>
+
+<div class="rail">
+  <b>Simulate</b>
+  <button class="tog" id="addBtn">New HOT lead arrives</button>
+  <button class="tog" id="connBtn" aria-pressed="false">Drop connection</button>
+  <button class="tog" id="staleBtn" aria-pressed="false">Quiet for 20 min</button>
+  <button class="tog" id="busyBtn">Busy afternoon (+40)</button>
+  <b>View</b>
+  <div class="seg" id="modeSeg">
+    <button data-mode="compare" aria-pressed="true">Compare all</button>
+    <button data-mode="focus" aria-pressed="false">Focus one</button>
+  </div>
+  <button class="tog" id="cycBtn" hidden></button>
+</div>
+
+<div class="frames" id="frames"></div>
+
+<h2 class="sect">What the prototype is testing</h2>
+<section class="notes">
+  <div class="note">
+    <span class="tag">Required by ticket 15</span>
+    <h3>Staff must recognise the broken state</h3>
+    <p>The connection dot and the <strong>last lead received</strong> clock are not decoration — with no
+    dead-man's switch, they are the only way anyone learns that capture has stopped.</p>
+    <p><strong>Drop connection</strong> and <strong>Quiet for 20 min</strong> show staff the two failure
+    states. Ticket 18 requires rehearsing these, because a person cannot recognise a state they have never
+    seen.</p>
+  </div>
+  <div class="note">
+    <span class="tag">Required by 07, 10 and 12</span>
+    <h3>"Handled" is load-bearing, not a to-do tick</h3>
+    <p>Marking a lead handled feeds the dashboard's <strong>BU Handoffs</strong> stage, and it sets the
+    retention exemption that stops the 90-day job deleting a lead a BU is still pursuing.</p>
+    <p>So the control has to be easy to hit and hard to hit by accident — it is doing data-protection work.</p>
+  </div>
+  <div class="note">
+    <span class="tag w">Found by building it</span>
+    <h3>The working list has to age out</h3>
+    <p>Around 300 leads a day arrive and staff will not mark every one handled — they are talking to people.
+    Without ageing, <strong>Needs action</strong> grows all day until it is a scroll of hundreds, most of them
+    visitors who left hours ago.</p>
+    <p>So a lead leaves the working list when it is handled <strong>or</strong> once it is 30 minutes old.
+    Nothing is lost — it moves to Earlier and still reaches its BU in the nightly pack. Press
+    <strong>Busy afternoon</strong> to see the difference.</p>
+  </div>
+  <div class="note">
+    <span class="tag">From ticket 04</span>
+    <h3>The score explains itself</h3>
+    <p>Every lead carries its per-category breakdown, because "why did this one score 65?" is the first thing
+    a sceptical salesperson asks. Tap a lead to see it.</p>
+    <p>Bands and BU names are fine here — <strong>no visitor ever sees this screen</strong>.</p>
+  </div>
+</section>
+
+<footer>Throwaway prototype for a decision. Fake leads, no backend, nothing persists.</footer>
+</div>
+
+<script>
+const SEED=[
+ {n:'Ammar Yusri',o:'ABC Pte Ltd',r:'Owner, C-suite or Director',i:'Payments',nd:'Cross-border',
+  t:'1-3 months',it:'Actively looking',s:95,b:'HOT',bu:'Transaction Banking',
+  brk:'need 25 · time 15 · intent 20 · role 15 · fit 10 · engage 10',ago:'just now',m:0},
+ {n:'Raj Kumar',o:'Solaris Foods',r:'Manager or finance role',i:'Financing',nd:'Working capital',
+  t:'Now / under a month',it:'Actively looking',s:90,b:'HOT',bu:'Business Banking',
+  brk:'need 25 · time 20 · intent 20 · role 10 · fit 10 · engage 5',ago:'4 min ago',m:4},
+ {n:'Nurul Aisyah',o:'Kestrel Systems',r:'Owner, C-suite or Director',i:'Managing Risk',nd:'FX exposure',
+  t:'1-3 months',it:'Considering options',s:75,b:'WARM',bu:'Markets & Treasury',
+  brk:'need 25 · time 15 · intent 10 · role 15 · fit 10 · engage 0',ago:'11 min ago',m:11},
+ {n:'Li Wei',o:'Meridian Logistics',r:'Manager or finance role',i:'Managing Cash',nd:'Seeing cash clearly',
+  t:'3-6 months',it:'Considering options',s:65,b:'WARM',bu:'Cash Management',
+  brk:'need 25 · time 10 · intent 10 · role 10 · fit 10 · engage 0',ago:'18 min ago',m:18},
+ {n:'Sarah Tan',o:'Northwind Trading',r:'Executive, analyst or other',i:'Digitalising',nd:'Reporting',
+  t:'6-12 months',it:'Just researching',s:50,b:'QUALIFIED',bu:'Digital',
+  brk:'need 25 · time 5 · intent 5 · role 5 · fit 10 · engage 0',ago:'26 min ago',m:26},
+ {n:'Chen Hui',o:'Bright Harbour',r:'Executive, analyst or other',i:'Just Exploring',nd:'Nothing specific',
+  t:'No set timeline',it:'Just researching',s:20,b:'EXPLORATORY',bu:'Other / Unrouted',
+  brk:'need 10 · time 0 · intent 5 · role 5 · fit 0 · engage 0',ago:'33 min ago',m:33}];
+
+const VARIANTS={
+ A:{name:'Queue list',trade:'Compact rows, tap to expand. Most leads visible at once — best for working a backlog, weakest for acting on one.',render:rA},
+ B:{name:'One at a time',trade:'The newest lead fills the screen; page through the rest. Best for acting, no overview at all.',render:rB},
+ C:{name:'Triage split',trade:'Unhandled leads as rich cards on top, everything already handled collapsed to one line below.',render:rC}};
+
+const st={mode:'focus',focus:'C',showEarlier:false,showHandled:false,conn:true,stale:false,ack:false,
+ leads:SEED.map((l,i)=>({...l,id:i,done:false,open:i===0})),extra:0};
+
+function pill(b){return `<span class="pill ${b}">${b}</span>`}
+function head(){
+ const last=st.stale?'last lead 22 min ago':'last lead '+(st.leads[0]?st.leads[0].ago:'—');
+ return `<div class="topbar">
+   <span class="dot ${st.conn?'ok':'bad'}"></span>
+   <span>${st.conn?'Live':'Reconnecting…'}</span>
+   <span class="stale ${st.stale||!st.conn?'warn':''}">${last}</span></div>`}
+function banner(){
+ const hot=st.leads.find(l=>l.b==='HOT'&&!l.done);
+ if(!hot||st.ack)return '';
+ return `<div class="banner"><div><div class="b1">HOT — ${hot.n}</div>
+  <div class="b2">${hot.o} · ${hot.nd}</div></div>
+  <button data-ack>Acknowledge</button></div>`}
+function detail(l){return `
+ <div class="meta"><span>Interest <b>${l.i}</b></span><span>Need <b>${l.nd}</b></span></div>
+ <div class="meta"><span>Timeline <b>${l.t}</b></span><span>Intent <b>${l.it}</b></span></div>
+ <div class="meta"><span>${l.r}</span></div>
+ <div class="brk">${l.brk}</div>
+ <div class="action">Connect to ${l.bu}</div>
+ <button class="mark" data-mark="${l.id}" data-done="${l.done?1:0}">${l.done?'Handled ✓':'Mark handled'}</button>`}
+
+function leadCard(l,expanded){
+ return `<div class="lead ${l.done?'done':''}" data-open="${l.id}">
+  <div class="stripe" style="background:var(--${l.b==='HOT'?'hot':l.b==='WARM'?'warm':l.b==='QUALIFIED'?'qual':'expl'})"></div>
+  <div class="row1">${pill(l.b)}<div><div class="who">${l.n}</div><div class="org">${l.o}</div></div>
+   <span class="score">${l.s}</span></div>
+  ${expanded?detail(l):`<div class="meta"><span>${l.i} · ${l.nd}</span></div>`}
+ </div>`}
+
+function rA(){ // compact list, tap to expand
+ return head()+banner()+`<div class="list">`+
+  st.leads.map(l=>leadCard(l,l.open)).join('')+`</div>`}
+function rB(){ // one at a time
+ const l=st.leads[st.extra%st.leads.length];
+ return head()+banner()+`<div class="list">${leadCard(l,true)}</div>
+  <div class="pager"><button data-pg="-1">← Previous</button><button data-pg="1">Next →</button></div>`}
+function miniRow(l){return `<div class="lead ${l.done?'done':''}" data-open="${l.id}">
+ <div class="row1">${pill(l.b)}<div class="who">${l.n}</div><span class="score">${l.s}</span></div>
+ ${l.open?detail(l):''}</div>`}
+function rC(){ // triage split, with the 30-minute ageing rule
+ const un=st.leads.filter(l=>!l.done);
+ const now=un.filter(l=>l.m<=30), earlier=un.filter(l=>l.m>30);
+ const done=st.leads.filter(l=>l.done);
+ let s=head()+banner()+`<div class="list">`;
+ s+=`<div class="sechead">Needs action — ${now.length}</div>`;
+ s+= now.length ? now.map(l=>leadCard(l,l.open)).join('')
+                : '<div class="empty">All caught up.</div>';
+ if(earlier.length){
+  s+=`<div class="sechead" data-sec="earlier" style="cursor:pointer">Earlier — ${earlier.length} ${st.showEarlier?'▾':'▸'}</div>`;
+  if(st.showEarlier) s+=earlier.map(miniRow).join('');
+ }
+ if(done.length){
+  s+=`<div class="sechead" data-sec="handled" style="cursor:pointer">Handled — ${done.length} ${st.showHandled?'▾':'▸'}</div>`;
+  if(st.showHandled) s+=done.map(miniRow).join('');
+ }
+ return s+`</div>`}
+
+const frames=document.getElementById('frames'),cyc=document.getElementById('cycBtn');
+function render(){
+ document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===st.mode)));
+ document.getElementById('connBtn').setAttribute('aria-pressed',String(!st.conn));
+ document.getElementById('staleBtn').setAttribute('aria-pressed',String(st.stale));
+ cyc.hidden=st.mode!=='focus'; if(st.mode==='focus')cyc.textContent='Showing '+st.focus+' — cycle';
+ const keys=st.mode==='focus'?[st.focus]:Object.keys(VARIANTS);
+ frames.innerHTML=keys.map(k=>{const v=VARIANTS[k];return `
+  <div class="vcard"><div class="vhead"><span class="vkey">${k}</span><span class="vname">${v.name}</span></div>
+   <p class="vtrade">${v.trade}</p>
+   <div class="holder"><div class="phone" data-ph><div class="scr">${v.render()}</div></div></div></div>`}).join('');
+ scale();
+}
+function scale(){
+ frames.querySelectorAll('.vcard').forEach(c=>{
+  const h=c.querySelector('.holder'),p=c.querySelector('[data-ph]');
+  const k=Math.min(1,(h.clientWidth-28)/390,(st.mode==='focus'?800:600)/780);
+  p.style.transform='scale('+k+')'; h.style.height=(780*k+28)+'px';});
+}
+frames.addEventListener('click',e=>{
+ const sec=e.target.closest('[data-sec]');
+ if(sec){ if(sec.dataset.sec==='earlier')st.showEarlier=!st.showEarlier;
+          else st.showHandled=!st.showHandled; render(); return }
+ const ack=e.target.closest('[data-ack]'); if(ack){st.ack=true;render();return}
+ const mk=e.target.closest('[data-mark]');
+ if(mk){const l=st.leads.find(x=>x.id==mk.dataset.mark);l.done=!l.done;render();return}
+ const pg=e.target.closest('[data-pg]'); if(pg){st.extra+=(+pg.dataset.pg)+st.leads.length;render();return}
+ const op=e.target.closest('[data-open]');
+ if(op){const l=st.leads.find(x=>x.id==op.dataset.open);l.open=!l.open;render()}
+});
+document.getElementById('addBtn').onclick=()=>{
+ st.leads.unshift({n:'Priya Menon',o:'Halcyon Marine',r:'Owner, C-suite or Director',i:'Payments',
+  nd:'Getting paid faster',t:'Now / under a month',it:'Actively looking',s:100,b:'HOT',
+  bu:'Transaction Banking',brk:'need 25 · time 20 · intent 20 · role 15 · fit 10 · engage 10',
+  ago:'just now',m:0,id:Date.now(),done:false,open:false});
+ st.ack=false;st.stale=false;render()};
+document.getElementById('busyBtn').onclick=()=>{
+ const names=['Wei Jun','Farah Idris','Tom Nguyen','Grace Lim','Arun Pillai','Mei Ling'];
+ const bus=['Transaction Banking','Cash Management','Business Banking','Digital','Markets & Treasury'];
+ for(let i=0;i<40;i++){const sc=20+((i*13)%80);
+  st.leads.push({n:names[i%6]+' '+(i+1),o:'Client '+(i+1),r:'Manager or finance role',
+   i:'Payments',nd:'Reconciliation',t:'3-6 months',it:'Considering options',s:sc,
+   b:sc>=80?'HOT':sc>=60?'WARM':sc>=40?'QUALIFIED':'EXPLORATORY',bu:bus[i%5],
+   brk:'need 25 · time 10 · intent 10 · role 10 · fit 10 · engage 0',
+   ago:(35+i)+' min ago',m:35+i,id:1000+i,done:false,open:false});}
+ render()};
+document.getElementById('connBtn').onclick=()=>{st.conn=!st.conn;render()};
+document.getElementById('staleBtn').onclick=()=>{st.stale=!st.stale;render()};
+document.getElementById('modeSeg').onclick=e=>{const b=e.target.closest('button');if(b){st.mode=b.dataset.mode;render()}};
+cyc.onclick=()=>{const k=Object.keys(VARIANTS);st.focus=k[(k.indexOf(st.focus)+1)%k.length];render()};
+addEventListener('keydown',e=>{if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+ const k=Object.keys(VARIANTS);
+ if(e.key==='ArrowLeft'){st.mode='focus';st.focus=k[(k.indexOf(st.focus)-1+k.length)%k.length];render()}
+ if(e.key==='ArrowRight'){st.mode='focus';st.focus=k[(k.indexOf(st.focus)+1)%k.length];render()}});
+addEventListener('resize',scale);
+render();
+</script>
