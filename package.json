@@ -2,7 +2,7 @@
   "name": "uob-booth-npc",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": ">=20.9.0" },
+  "engines": { "node": "22.x" },
   "scripts": {
     "dev": "next dev -p 4310 -H 0.0.0.0",
     "build": "next build",

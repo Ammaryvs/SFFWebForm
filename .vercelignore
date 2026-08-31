@@ -1,0 +1,9 @@
+# Design artefacts and source art. None of these are read by `next build`:
+# the visitor app ships pre-encoded assets from public/, and the spec and
+# tickets are internal working documents that have no business being
+# uploaded to a hosting provider.
+.scratch/
+docs/
+Game Assets/
+dev.log
+supabase/
