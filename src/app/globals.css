@@ -9,14 +9,25 @@
  * form are rebuilt in CSS, because a flat JPG frame cannot hold copy that
  * changes length at every node.
  *
- * Sizes are in rem so the browser's own text scaling works. Press Start 2P
- * at this size is the least forgiving option available (spec §18), so the
- * floor is 0.7rem rather than the prototype's 10.5px.
+ * Sizes are in rem so the browser's own text scaling works. Pixel type at
+ * this size is the least forgiving option available (spec §18), so the
+ * sizes below sit above the prototype's 10.5px.
  */
 
+/*
+ * Silkscreen, SIL Open Font License. Chosen over Press Start 2P, which the
+ * prototype itself labelled "very wide": Silkscreen is the narrower face,
+ * which buys back room in a 360px-wide dialogue box.
+ *
+ * It is PROPORTIONAL, not fixed-advance. The copy budget in spec §4 was
+ * derived from Press Start 2P's 1.0em-per-character metric, so a character
+ * count is no longer an exact bound here — it is a conservative one, since
+ * a narrower face fits more. The true limit wants measuring on a real
+ * 360px phone at rehearsal.
+ */
 @font-face {
-  font-family: 'Press Start 2P';
-  src: url('/fonts/press-start-2p.woff2') format('woff2');
+  font-family: 'Silkscreen';
+  src: url('/fonts/silkscreen.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   /* `block` on purpose: the fallback stack is not metrically identical and
@@ -45,13 +56,17 @@
   --frame: #f2f2ee;
   --frame-edge: #9aa0ab;
 
-  --pix: 'Press Start 2P', ui-monospace, monospace;
+  --pix: 'Silkscreen', ui-monospace, monospace;
   --ui: 'Noto Sans', 'Open Sans', system-ui, -apple-system, sans-serif;
 
-  --pix-xs: 0.62rem;
-  --pix-sm: 0.7rem;
-  --pix-md: 0.78rem;
-  --pix-lg: 0.88rem;
+  /* Silkscreen's glyphs are smaller within the em than Press Start 2P's,
+     so these sit roughly 25% above the equivalent Press Start 2P sizes to
+     hold the same apparent size — and a little legibility back, which
+     spec §18 asks for. Verify at arm's length under convention lighting. */
+  --pix-xs: 0.78rem;
+  --pix-sm: 0.9rem;
+  --pix-md: 1rem;
+  --pix-lg: 1.15rem;
 
   --tap: 44px;
 }
@@ -153,6 +168,22 @@ body {
   font-family: var(--pix);
   font-weight: 400;
   letter-spacing: 0;
+}
+
+/* A pixel face anti-aliased is a blurry pixel face. */
+.pix,
+.dialogbox,
+.opt,
+.cta,
+.cta__option,
+.form__title,
+.btn,
+.centre__big,
+.centre__small,
+.wordmark,
+.choices__scrollhint {
+  -webkit-font-smoothing: none;
+  font-smooth: never;
 }
 
 .nameplate {

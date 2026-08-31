@@ -187,3 +187,47 @@ The typeface in the original artwork remains unidentified and is presumed unlice
 | 08 | Precache the Press Start 2P webfont with the background; re-encode the background to WebP. |
 | 05 | Tone mismatch mitigated by composition — the crop removes most of the signage. |
 | 18 | Rehearsal must check legibility of Press Start 2P at 10.5px on the budget Android under hall lighting. |
+
+---
+
+### 2026-08-31 — typeface changed to Silkscreen during build
+
+**Decision (user):** the visitor app ships **Silkscreen** (SIL Open Font
+License), not Press Start 2P.
+
+This is the lever this ticket already recorded at the end of its Variant A
+reasoning — *"switch to Silkscreen (roughly doubles the budget)"* — taken
+up front rather than as a rescue. It is also what the prototype defaulted
+to; Press Start 2P was the option the prototype itself labelled "very
+wide".
+
+**What changes:**
+
+- `public/fonts/silkscreen.woff2`, latin subset, regular only. 8.4 KB
+  against Press Start 2P's 12.5 KB. No bold cut: nothing in the visitor UI
+  sets a pixel bold, and a second face is dead weight in the precache.
+- Pixel sizes rise about 25% (`--pix-sm` 0.7rem → 0.9rem). Silkscreen's
+  glyphs are smaller within the em, so matching the apparent size needs
+  more px — which also buys back some of the legibility this ticket flags
+  as fog.
+- Option and exit markers changed from `▸` / `⏭` / `▼` to ASCII `>` and
+  `>>`. Silkscreen is a 5×7 face with limited coverage; a glyph it lacks
+  falls back to the system font and renders as non-pixel type mid-row.
+
+**What this costs, stated plainly:**
+
+The 78 / 22 character budgets were **exact arithmetic** under Press Start
+2P, because it is fixed-advance at 1.0em per character. Silkscreen is
+proportional, so a character count is no longer an exact bound — an "M" and
+an "i" no longer cost the same.
+
+The budgets are kept unchanged and the tests still assert them, but they
+are now a **conservative** guard rather than a measurement: this ticket's
+own estimate is that Silkscreen roughly doubles the budget, and the 25%
+size increase gives back part of that, leaving roughly 120–125 characters
+of real room against a shipped deck whose longest line is 51. Nothing in
+the deck is at risk; new copy still has generous headroom.
+
+**Owed at rehearsal:** re-measure the true per-line character count on a
+real 360px phone. Ticket 18's budget-Android legibility check now reads
+"Silkscreen at 0.9rem", not "Press Start 2P at 10.5px".

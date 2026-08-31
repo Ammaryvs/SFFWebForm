@@ -4,7 +4,7 @@
  * Two files, and only two, are ever downloaded by a visitor's phone:
  *
  *   - the background, re-encoded to WebP (~650 KB JPG -> ~250 KB)
- *   - the Press Start 2P webfont
+ *   - the Silkscreen webfont
  *
  * The other three files in `Game Assets/` are reference only: a flat JPG
  * frame cannot hold copy that changes length at every node, so the dialogue
@@ -24,12 +24,17 @@ import sharp from 'sharp';
 const ROOT = process.cwd();
 const SOURCE_BG = join(ROOT, 'Game Assets', 'Background Screen.jpg');
 const OUT_IMG = join(ROOT, 'public', 'assets', 'background.webp');
-const OUT_FONT = join(ROOT, 'public', 'fonts', 'press-start-2p.woff2');
+const OUT_FONT = join(ROOT, 'public', 'fonts', 'silkscreen.woff2');
 
-// Pinned so a re-run cannot silently swap the metric the copy budget
-// assumes. Press Start 2P, SIL Open Font License.
+// Silkscreen, SIL Open Font License. Pinned to the exact latin subset so a
+// re-run cannot silently swap the metric the copy budget is measured
+// against.
+//
+// Regular only. Nothing in the visitor UI sets a pixel bold — the form
+// labels that are bold are Noto Sans — and a second face would be dead
+// weight in the precache against a 1.2 MB cold-load budget.
 const FONT_URL =
-  'https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2';
+  'https://fonts.gstatic.com/s/silkscreen/v6/m8JXjfVPf62XiF7kO-i9YLNlaw.woff2';
 
 async function exists(path) {
   try {
@@ -69,7 +74,7 @@ async function fetchFont() {
 
   if (await exists(OUT_FONT)) {
     const { size } = await stat(OUT_FONT);
-    console.log(`press-start-2p.woff2  already present (${size} bytes)`);
+    console.log(`silkscreen.woff2  already present (${size} bytes)`);
     return;
   }
 
@@ -86,7 +91,7 @@ async function fetchFont() {
   }
   const bytes = Buffer.from(await response.arrayBuffer());
   await writeFile(OUT_FONT, bytes);
-  console.log(`press-start-2p.woff2  ${bytes.length} bytes`);
+  console.log(`silkscreen.woff2  ${bytes.length} bytes`);
 }
 
 await buildBackground();

@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // Not locked: pinch-zoom is the only text-scaling route some visitors
-  // have, and Press Start 2P at this size is unforgiving (spec §18).
+  // have, and pixel type at this size is unforgiving (spec §18).
   maximumScale: 5,
   viewportFit: 'cover',
   themeColor: '#00237b',
@@ -37,7 +37,7 @@ export default function RootLayout({
             frame renders at the right metrics on a cold load. */}
         <link
           rel="preload"
-          href="/fonts/press-start-2p.woff2"
+          href="/fonts/silkscreen.woff2"
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"

@@ -18,7 +18,15 @@ import type {
   OptionId,
 } from './types';
 
-/** Copy budgets from the font metric at 360px (spec §4). Hard limits. */
+/**
+ * Copy budgets at 360px (spec §4).
+ *
+ * Exact arithmetic under Press Start 2P, which was fixed-advance at 1.0em
+ * per character. The build ships Silkscreen, which is proportional and
+ * narrower, so these are now a CONSERVATIVE guard: the real limit is
+ * larger, and anything passing here fits. Re-measure on a real 360px phone
+ * at rehearsal before relaxing them.
+ */
 export const NPC_LINE_BUDGET = 78;
 export const CHOICE_LABEL_BUDGET = 22;
 

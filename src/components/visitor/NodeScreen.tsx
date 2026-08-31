@@ -59,7 +59,7 @@ export function NodeScreen({
             onClick={() => onChoose(option.id)}
           >
             <span className="opt__marker" aria-hidden="true">
-              ▸
+              &gt;
             </span>
             <span>{option.label}</span>
           </button>
@@ -73,13 +73,13 @@ export function NodeScreen({
         */}
         <button type="button" className="opt opt--exit" onClick={onExit}>
           <span className="opt__marker" aria-hidden="true">
-            ⏭
+            &gt;&gt;
           </span>
           <span>{EXIT_OPTION.label}</span>
         </button>
 
         <span className="choices__scrollhint" aria-hidden="true">
-          ▼ scroll for more
+          scroll for more
         </span>
       </div>
     </div>

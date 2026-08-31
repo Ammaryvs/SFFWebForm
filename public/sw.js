@@ -1,7 +1,7 @@
 /*
  * Service worker — spec §11.
  *
- * Precaches the app shell, the background image and the Press Start 2P
+ * Precaches the app shell, the background image and the Silkscreen
  * webfont, so the app survives a mid-conversation reload on dead wifi. With
  * the node graph bundled as static JSON, the whole conversation then runs
  * with no network at all.
@@ -27,7 +27,7 @@ const CACHE = `uob-booth-${BUILD_ID}`;
 const PRECACHE = [
   '/',
   '/assets/background.webp',
-  '/fonts/press-start-2p.woff2',
+  '/fonts/silkscreen.woff2',
   '/manifest.webmanifest',
 ];
 

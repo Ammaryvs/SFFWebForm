@@ -6,6 +6,7 @@ coverage/
 .env
 .env*.local
 .vercel
+supabase/.temp/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
@@ -14,3 +15,4 @@ next-env.d.ts
 # public/assets/background.webp and public/fonts/press-start-2p.woff2 are
 # committed: the service worker precaches both, and a deploy that fetched
 # them at build time would break if Google Fonts were unreachable.
+dev.log

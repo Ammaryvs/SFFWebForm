@@ -109,7 +109,9 @@ A flat JPG frame cannot hold copy that changes length at every node. Everything 
 
 ### Typography
 
-**Press Start 2P** (SIL Open Font License), fallback `ui-monospace, monospace`. A fixed-advance face at 1.0em per character.
+**Silkscreen** (SIL Open Font License), fallback `ui-monospace, monospace`.
+
+> **Changed during build, 2026-08-31.** This section originally specified Press Start 2P, a fixed-advance face at 1.0em per character. Silkscreen is the narrower face ticket 11 already recorded as the lever if copy proved unwritable, and is what the prototype defaulted to. Full reasoning and costs: ticket 11 comments.
 
 **The webfont must be precached by the service worker alongside the background image** — the fallback is not metrically identical, so a runtime fetch would render the first frame at the wrong metrics.
 
@@ -117,7 +119,7 @@ The typeface in the original artwork is unidentified and presumed unlicensable.
 
 ### Copy budget — hard limits
 
-Derived from the font metric and box widths on the narrowest supported phone (360px):
+Derived from the font metric and box widths on the narrowest supported phone (360px). **These figures were exact arithmetic under Press Start 2P's fixed advance. Under Silkscreen, which is proportional, they are a conservative guard rather than a measurement — the real limit is larger and wants measuring at rehearsal:**
 
 | Element | Budget |
 | --- | --- |
@@ -496,7 +498,7 @@ PDPA requires consent in *evidential form*. Storing the sentence on all 2,000 ro
 
 ### Caching
 
-**A service worker precaches the app shell, the background image (WebP) and the Press Start 2P webfont** on first load, so the app survives a mid-conversation reload on dead wifi. With the node graph bundled as static JSON, the whole conversation runs with no network.
+**A service worker precaches the app shell, the background image (WebP) and the Silkscreen webfont** on first load, so the app survives a mid-conversation reload on dead wifi. With the node graph bundled as static JSON, the whole conversation runs with no network.
 
 **Cold-load budget: ≤ 1.2 MB transfer, interactive under 4 seconds** on a congested hall network.
 
@@ -791,7 +793,7 @@ Run **every day**, not only day one:
 | Current iPhone (Safari) | Happy path; the no-Background-Sync queue path |
 | **Older iPhone** | Service worker and `sendBeacon` support limits |
 | Current Android (Chrome) | Happy path; Background Sync draining a closed tab |
-| **Budget Android** | Pixel-art scaling, low-density screens, slow CPU, Press Start 2P legibility |
+| **Budget Android** | Pixel-art scaling, low-density screens, slow CPU, Silkscreen legibility |
 
 Plus the **dirty test phone** (old service worker, never cleared) and the **fallback tablet**.
 
@@ -852,7 +854,7 @@ Deliberately unresolved. None blocks the build.
 | **NFC tag hardware** | How many, what type, where they sit on the booth. Hangs on final booth layout. iOS/Android tap behaviour is a rehearsal observation. |
 | **Booth staff operating procedure — the human half** | The opening line, how staff hand the experience over, what they do while a visitor plays. Staff duties are accumulating across §7, §12, §14 and §15; a briefing document is forming and should be written. |
 | **"Explore Solutions" destination** | The EXPLORATORY ending needs somewhere to send people. Depends on what UOB collateral exists. |
-| **Accessibility of pixel type** | Contrast against the art, text scaling, screen readers. Press Start 2P at 10.5px in a scrolling panel is the least forgiving option available — this became *more* pressing, not less. |
+| **Accessibility of pixel type** | Contrast against the art, text scaling, screen readers. Pixel type in a scrolling panel is the least forgiving option available — this became *more* pressing, not less. The build ships Silkscreen at 0.9rem, above the 10.5px this was written against. |
 | **Language** | English-only assumed for a Singapore audience, unconfirmed. A second language means a **second full deck** against the same 78-character budget, not a translation pass. |
 | **Edge and error states** | Duplicate email, two visitors sharing a phone, back-button mid-tree, resuming an abandoned session. |
 | **Per-node drop-off analytics** | Unobservable **by choice** — per-node beacons were considered and declined as capturing no extra leads. Revisit only if a second event wants the curve. |
