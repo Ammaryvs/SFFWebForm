@@ -9,3 +9,8 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# Build artefacts checked in deliberately
+# public/assets/background.webp and public/fonts/press-start-2p.woff2 are
+# committed: the service worker precaches both, and a deploy that fetched
+# them at build time would break if Google Fonts were unreachable.

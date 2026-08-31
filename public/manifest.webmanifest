@@ -1,0 +1,9 @@
+{
+  "name": "UOB Booth",
+  "short_name": "UOB Booth",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070d",
+  "theme_color": "#00237b",
+  "icons": []
+}

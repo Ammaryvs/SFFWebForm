@@ -1,0 +1,512 @@
+/*
+ * Visitor app styles — spec §4.
+ *
+ * One composition on every screen: full-bleed background with all chrome
+ * overlaid at the bottom, matching `Dialog Example.jpg`. Nothing switches
+ * layout mid-conversation.
+ *
+ * Only the background is an image. The dialogue frame, choice panel and
+ * form are rebuilt in CSS, because a flat JPG frame cannot hold copy that
+ * changes length at every node.
+ *
+ * Sizes are in rem so the browser's own text scaling works. Press Start 2P
+ * at this size is the least forgiving option available (spec §18), so the
+ * floor is 0.7rem rather than the prototype's 10.5px.
+ */
+
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('/fonts/press-start-2p.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  /* `block` on purpose: the fallback stack is not metrically identical and
+     the copy budget assumes the webfont loaded. The service worker
+     precaches it, so the block window is a first-visit-only cost. */
+  font-display: block;
+}
+
+:root {
+  /* UOB palette. Recorded as user-confirmed on a sibling effort but
+     UNCONFIRMED for this build — check against the artwork before the
+     event (spec §4). */
+  --uob-azure: #005eb8;
+  --uob-resolution: #00237b;
+  --uob-brown: #c8bfb4;
+  --uob-grey: #b5aeaa;
+  --white: #ffffff;
+
+  /* DERIVED, not official: no UOB panel colour exists. Blends of
+     Resolution Blue (spec §18). */
+  --panel: #141d33;
+  --panel-raised: #1e2a47;
+  --panel-edge: #39435e;
+  --dialog-bg: #edebe4;
+  --dialog-ink: #14161a;
+  --frame: #f2f2ee;
+  --frame-edge: #9aa0ab;
+
+  --pix: 'Press Start 2P', ui-monospace, monospace;
+  --ui: 'Noto Sans', 'Open Sans', system-ui, -apple-system, sans-serif;
+
+  --pix-xs: 0.62rem;
+  --pix-sm: 0.7rem;
+  --pix-md: 0.78rem;
+  --pix-lg: 0.88rem;
+
+  --tap: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #05070d;
+  color: var(--white);
+  font-family: var(--ui);
+  /* The conversation is a fixed composition; the page itself never
+     scrolls, only the choice panel does. */
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid #7fb2e8;
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------- */
+/* The stage                                                              */
+/* --------------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #05070d;
+}
+
+.stage__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Keeps the receptionist centred and crops the retail signage largely
+     out of frame — the conversation asks about treasury and cross-border
+     collections, and wealth-management signage would clash. */
+  object-position: 50% 22%;
+}
+
+/* The upward gradient every piece of chrome sits over. */
+.stage__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(4, 7, 14, 0.94) 0%,
+    rgba(4, 7, 14, 0.86) 30%,
+    rgba(4, 7, 14, 0.35) 58%,
+    rgba(4, 7, 14, 0) 78%
+  );
+  pointer-events: none;
+}
+
+/* Splash and confirmation dim the whole frame instead (spec §4). */
+.stage__scrim--full {
+  background: rgba(6, 10, 20, 0.72);
+}
+
+.chrome {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0 0.75rem calc(0.75rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 100%;
+}
+
+.centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------- */
+/* Pixel chrome                                                           */
+/* --------------------------------------------------------------------- */
+
+.pix {
+  font-family: var(--pix);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.nameplate {
+  align-self: flex-start;
+  background: var(--uob-azure);
+  color: var(--white);
+  border: 3px solid var(--white);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: var(--pix-sm);
+  line-height: 1;
+}
+
+.dialogbox {
+  background: var(--dialog-bg);
+  color: var(--dialog-ink);
+  border: 3px solid var(--frame-edge);
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-size: var(--pix-sm);
+  line-height: 1.7;
+  /* Three lines of copy at the 78-character budget, plus slack for a
+     browser that has scaled the text up. */
+  min-height: 4.6rem;
+}
+
+.choices {
+  background: var(--panel);
+  border: 3px solid var(--frame-edge);
+  border-radius: 8px;
+  padding: 0.3rem;
+  /* Seven Interests plus the exit against roughly four visible rows: this
+     panel scrolls, and the affordance below is required (spec §4). */
+  max-height: 38dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  position: relative;
+}
+
+.choices__scrollhint {
+  position: sticky;
+  bottom: 0;
+  display: block;
+  text-align: center;
+  font-family: var(--pix);
+  font-size: var(--pix-xs);
+  color: var(--uob-grey);
+  background: linear-gradient(
+    to top,
+    var(--panel) 40%,
+    rgba(20, 29, 51, 0)
+  );
+  padding: 0.35rem 0 0.15rem;
+  pointer-events: none;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.6rem 0.7rem;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: #dfe4ee;
+  font-family: var(--pix);
+  font-size: var(--pix-sm);
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opt:hover,
+.opt:focus-visible {
+  background: var(--panel-raised);
+}
+
+.opt:active {
+  background: var(--uob-azure);
+  color: var(--white);
+}
+
+.opt__marker {
+  flex: none;
+  width: 1.1em;
+  color: var(--uob-azure);
+}
+
+.opt:hover .opt__marker,
+.opt:focus-visible .opt__marker {
+  color: var(--white);
+}
+
+/*
+ * The persistent exit. Under a single terminal submit this is the only
+ * route by which a departing visitor is captured at all, so it is rendered
+ * prominently — not as a grudging grey row.
+ */
+.opt--exit {
+  margin-top: 0.3rem;
+  border-top: 2px solid var(--panel-edge);
+  border-radius: 0 0 5px 5px;
+  color: var(--uob-brown);
+}
+
+.opt--exit:hover,
+.opt--exit:focus-visible {
+  background: var(--uob-resolution);
+  color: var(--white);
+}
+
+/* --------------------------------------------------------------------- */
+/* Check-in form                                                          */
+/* --------------------------------------------------------------------- */
+
+.form {
+  background: var(--frame);
+  color: var(--dialog-ink);
+  border: 3px solid var(--frame-edge);
+  border-radius: 10px;
+  padding: 0.8rem;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.form__title {
+  margin: 0 0 0.6rem;
+  background: var(--uob-azure);
+  color: var(--white);
+  padding: 0.5rem;
+  border-radius: 5px;
+  text-align: center;
+  font-family: var(--pix);
+  font-size: var(--pix-sm);
+  line-height: 1.5;
+}
+
+.field {
+  margin-bottom: 0.55rem;
+}
+
+.field__label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.field__hint {
+  font-weight: 400;
+  color: #55595f;
+}
+
+.field__control {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem;
+  border: 2px solid #b9bec8;
+  border-radius: 4px;
+  background: #e4e2da;
+  color: var(--dialog-ink);
+  font-family: var(--ui);
+  font-size: 1rem; /* 16px — anything smaller makes iOS zoom on focus. */
+}
+
+.field__control:invalid {
+  border-color: #b9bec8;
+}
+
+.field__error {
+  display: block;
+  margin-top: 0.2rem;
+  color: #97120c;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.consent {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.consent input[type='checkbox'] {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin: 0;
+  accent-color: var(--uob-azure);
+}
+
+.consent--disabled {
+  color: #6c7076;
+}
+
+.notice {
+  margin-top: 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #c9c9c2;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: #3f4247;
+}
+
+.notice a {
+  color: #00459a;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.btn {
+  flex: 1;
+  min-height: 46px;
+  padding: 0.6rem;
+  border: 2px solid #7f8794;
+  border-radius: 5px;
+  background: #d8d6cf;
+  color: #222;
+  font-family: var(--pix);
+  font-size: var(--pix-xs);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--uob-azure);
+  border-color: var(--white);
+  color: var(--white);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------- */
+/* CTA                                                                    */
+/* --------------------------------------------------------------------- */
+
+.cta {
+  background: var(--panel);
+  border: 3px solid var(--frame-edge);
+  border-radius: 9px;
+  padding: 0.8rem;
+}
+
+.cta__headline {
+  margin: 0 0 0.7rem;
+  color: var(--white);
+  text-align: center;
+  font-family: var(--pix);
+  font-size: var(--pix-sm);
+  line-height: 1.7;
+}
+
+.cta__option {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 0.5rem;
+  padding: 0.7rem;
+  background: var(--panel-raised);
+  border: 2px solid var(--panel-edge);
+  border-radius: 6px;
+  color: #dfe4ee;
+  font-family: var(--pix);
+  font-size: var(--pix-xs);
+  line-height: 1.5;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Emphasis, never a lock: all three actions are selectable in every band,
+   which is what makes Engagement a real signal. */
+.cta__option--emphasised {
+  background: var(--uob-azure);
+  border-color: var(--white);
+  color: var(--white);
+}
+
+/* --------------------------------------------------------------------- */
+/* Splash and confirmation                                                */
+/* --------------------------------------------------------------------- */
+
+.wordmark {
+  font-family: var(--pix);
+  font-size: 2rem;
+  color: var(--white);
+  letter-spacing: 0.08em;
+}
+
+.centre__big {
+  font-family: var(--pix);
+  font-size: var(--pix-md);
+  line-height: 1.8;
+  color: var(--white);
+  max-width: 22ch;
+}
+
+.centre__small {
+  font-family: var(--pix);
+  font-size: var(--pix-sm);
+  line-height: 1.8;
+  color: var(--uob-grey);
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  background: var(--white);
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    opacity: 0.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    opacity: 0.6;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Taller phones can afford a larger dialogue panel and more visible rows. */
+@media (min-height: 720px) {
+  .choices {
+    max-height: 42dvh;
+  }
+}
