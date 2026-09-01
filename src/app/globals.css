@@ -186,6 +186,23 @@ body {
   font-smooth: never;
 }
 
+/*
+ * The name-plate row. On a question node it carries the back control at
+ * the far end; on the spoken screens the name plate sits alone in the
+ * column, which is why `align-self` stays on .nameplate and is neutralised
+ * here rather than the other way round.
+ */
+.chrome__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chrome__header .nameplate {
+  align-self: center;
+}
+
 .nameplate {
   align-self: flex-start;
   background: var(--uob-azure);
@@ -210,17 +227,143 @@ body {
   min-height: 4.6rem;
 }
 
+/*
+ * The receptionist's spoken screens — spec §4.
+ *
+ * The screens with no choice panel, so the dialogue box carries the whole
+ * interaction: it IS the button. Styled off .dialogbox so the
+ * greeting sits in the same frame the receptionist speaks from everywhere
+ * else; the button's own defaults are the only things reset here.
+ */
+.dialogbox--speech {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+
+  /*
+   * Silkscreen, like the rest of the chrome. The base .dialogbox sets a
+   * pixel SIZE but no family, so it inherits the UI face; the spoken
+   * screens are the receptionist talking and want her own.
+   */
+  font: inherit;
+  font-family: var(--pix);
+  /* A step above the node dialogue: nothing competes with it on these
+     screens, and it is read at arm's length across a booth counter. */
+  font-size: var(--pix-lg);
+  /* Silkscreen is a 5x7 face with no descender room to spare; wrapped
+     pixel rows set tighter than this collide. */
+  line-height: 1.6;
+
+  /* A bigger box, not just bigger type — the frame should read as the
+     receptionist's, and these screens have no panel stacked below to
+     share the height with. */
+  min-height: 11rem;
+  padding: 1.25rem 1.1rem 0.9rem;
+  /* At the largest browser text scaling the copy can still outgrow the
+     screen; scroll inside the box rather than pushing the frame off. */
+  max-height: 68dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * The typed lines. A flex column of its own because the beat's lines are
+ * wrapped in one element while they are being revealed — .dialogbox--speech
+ * would otherwise see a single child and lose the gap between them.
+ */
+.dialogbox__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  /* Holds the box's full height from the first character, so the frame
+     does not grow line by line under the receptionist as she speaks. */
+  flex: 1;
+}
+
+.dialogbox__line {
+  display: block;
+  /* An empty line still occupies its row: the second line of a beat exists
+     before it has been typed, so the box does not jump when it starts. */
+  min-height: 1em;
+}
+
+/*
+ * The affordance. Deliberately not a row in a panel — a button under the
+ * greeting would read as the conversation's first choice, which this
+ * screen does not have.
+ */
+.dialogbox__hint {
+  display: block;
+  margin-top: auto;
+  padding-top: 0.35rem;
+  align-self: flex-end;
+  font-family: var(--pix);
+  font-size: var(--pix-sm);
+  color: #6b6f78;
+  animation: hint-pulse 1.6s steps(1, end) infinite;
+}
+
+/*
+ * Held back until she stops talking — but kept in the layout, or the box
+ * would change height at the exact moment the visitor is deciding whether
+ * it is finished.
+ */
+.dialogbox__hint--held {
+  visibility: hidden;
+}
+
+@keyframes hint-pulse {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+/* A blinking hint is decoration; it is not worth a vestibular cost. */
+@media (prefers-reduced-motion: reduce) {
+  .dialogbox__hint {
+    animation: none;
+  }
+}
+
 .choices {
   background: var(--panel);
   border: 3px solid var(--frame-edge);
   border-radius: 8px;
-  padding: 0.3rem;
-  /* Seven Interests plus the exit against roughly four visible rows: this
-     panel scrolls, and the affordance below is required (spec §4). */
-  max-height: 38dvh;
+  padding: 0.25rem;
+  /* Seven Interests plus the exit: this panel scrolls, and the affordance
+     below is required (spec §4). Panel and row heights were reduced
+     together, so the visible-row count is roughly preserved while the
+     panel takes less of the screen. */
+  max-height: 32dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
+}
+
+/*
+ * While the receptionist is still speaking. Dimmed rather than hidden: the
+ * visitor can see what is coming and that it is not ready yet, and the
+ * panel keeps its height so nothing moves when it becomes live.
+ *
+ * The `inert` attribute on the element does the actual blocking.
+ */
+.choices--pending {
+  opacity: 0.4;
+  transition: opacity 140ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choices--pending {
+    transition: none;
+  }
 }
 
 .choices__scrollhint {
@@ -243,10 +386,15 @@ body {
 .opt {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
   width: 100%;
-  min-height: var(--tap);
-  padding: 0.6rem 0.7rem;
+  /* Deliberately below the 44px --tap token, which the check-in fields
+     still use. 38px stays well clear of the WCAG 2.2 AA minimum target
+     size (24px) but drops below the AAA / Apple HIG 44px guidance —
+     see spec §4. Shorter rows also fit more Interests above the fold,
+     which reduces the option-order bias on the popularity metric. */
+  min-height: 38px;
+  padding: 0.35rem 0.6rem;
   background: transparent;
   border: 0;
   border-radius: 5px;
@@ -294,6 +442,59 @@ body {
 .opt--exit:hover,
 .opt--exit:focus-visible {
   background: var(--uob-resolution);
+  color: var(--white);
+}
+
+/*
+ * Back — a correction to the last answer, not an answer.
+ *
+ * Muted on purpose. It shares the pixel face and the marker idiom with the
+ * choice rows so it belongs to the same interface, but it is quieter than
+ * every one of them: the forward path is what the booth is for, and a back
+ * control that competed with the options would invite a visitor to browse
+ * their own answers instead of finishing the minute.
+ *
+ * It sits over the photograph rather than inside a panel, so it carries
+ * its own dark ground — the scrim alone is not reliable contrast this high
+ * up the frame.
+ */
+.backstep {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  min-height: 38px;
+  padding: 0.3rem 0.7rem;
+  background: rgba(20, 29, 51, 0.85);
+  border: 2px solid var(--panel-edge);
+  border-radius: 5px;
+  color: var(--uob-grey);
+  font-family: var(--pix);
+  font-size: var(--pix-xs);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.backstep:hover,
+.backstep:focus-visible {
+  background: var(--uob-resolution);
+  border-color: var(--white);
+  color: var(--white);
+}
+
+.backstep:active {
+  background: var(--uob-azure);
+  color: var(--white);
+}
+
+/* Mirrors .opt__marker, pointing the other way. */
+.backstep__marker {
+  color: var(--uob-azure);
+}
+
+.backstep:hover .backstep__marker,
+.backstep:focus-visible .backstep__marker,
+.backstep:active .backstep__marker {
   color: var(--white);
 }
 
@@ -433,7 +634,27 @@ body {
 /* CTA                                                                    */
 /* --------------------------------------------------------------------- */
 
+/*
+ * The tap-to-skip surface, over the whole screen while a line types.
+ *
+ * Fixed rather than absolute so it covers the frame from inside .chrome,
+ * which is pinned to the bottom of it. Transparent: the visitor should see
+ * no reason a tap lands here rather than on what is under it, because the
+ * outcome is the same one they wanted — the line, now.
+ */
+.skiplayer {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: transparent;
+  cursor: pointer;
+}
+
 .cta {
+  /* Above .skiplayer: the CTA's three actions are the one thing on the
+     visitor's path that must never be swallowed by an animation. */
+  position: relative;
+  z-index: 6;
   background: var(--panel);
   border: 3px solid var(--frame-edge);
   border-radius: 9px;
@@ -538,6 +759,6 @@ body {
 /* Taller phones can afford a larger dialogue panel and more visible rows. */
 @media (min-height: 720px) {
   .choices {
-    max-height: 42dvh;
+    max-height: 36dvh;
   }
 }

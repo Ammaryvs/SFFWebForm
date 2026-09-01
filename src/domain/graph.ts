@@ -11,6 +11,7 @@
  */
 
 import type {
+  Answers,
   ChoiceOption,
   ConversationNode,
   InterestId,
@@ -43,6 +44,64 @@ export const EXIT_OPTION: ChoiceOption = {
   id: 'exit',
   label: 'Skip to the end',
 };
+
+/** The one NPC. Shown on the name plate of every screen they speak on. */
+export const NPC_NAME = 'RECEPTIONIST';
+
+/**
+ * What the receptionist says outside the node graph — spec §4, §6.
+ *
+ * Two spoken moments bracket check-in: a greeting that leads into the
+ * form, and a thank-you that leads into the questions. Neither asks the
+ * visitor to choose anything, so neither has a choice panel; the visitor
+ * taps the dialogue box to move on.
+ *
+ * Both are phrased as statements, never questions. With no choice panel on
+ * screen, a question mark leaves the visitor hunting for options that are
+ * not there.
+ *
+ * Each entry is ONE SCREEN, and its lines share a single dialogue box. One
+ * thought per tap is what makes this read as somebody talking rather than
+ * as a paragraph of onboarding copy — and every line stays inside the NPC
+ * budget, so no screen can outgrow its box.
+ */
+type SpeechBeats = readonly (readonly string[])[];
+
+/**
+ * Before check-in. The second beat asks for the details in the same breath
+ * a person at a desk would, so the form that follows arrives as something
+ * somebody asked for rather than as a wall of fields in front of a
+ * stranger.
+ *
+ * It is warm but promises nothing about what happens to those details:
+ * that claim belongs to the consent block on the form itself, where it is
+ * versioned and evidenced, and repeating it here in friendlier words would
+ * only create a second, looser promise.
+ */
+export const WELCOME_BEATS = [
+  ["Hi there, and welcome to the UOB booth! I'm the receptionist."],
+  ["Let's get to know you first. Please leave your contact details."],
+] as const satisfies SpeechBeats;
+
+/**
+ * After check-in, before the first question. It closes the errand the
+ * greeting opened — the visitor did the thing that was asked of them, and
+ * is told what the rest of the minute is for before being asked to choose
+ * anything.
+ */
+export const THANKS_BEATS = [
+  [
+    'Thank you for filling up the form!',
+    "Let's have a short chat and I'll point you to the right team.",
+  ],
+] as const satisfies SpeechBeats;
+
+/**
+ * The whole dialogue box is the tap target, so the hint sits inside it
+ * rather than becoming a button of its own — a button here would read as
+ * the first choice of the conversation, which these screens do not have.
+ */
+export const SPEECH_TAP_HINT = 'tap to continue';
 
 export const INTEREST_NODE = {
   id: 'interest',
@@ -281,4 +340,56 @@ export const INTEREST_ORDER_VERSION = 'v1';
 
 export function interestRank(interestId: OptionId): number {
   return INTEREST_NODE.options.findIndex((option) => option.id === interestId);
+}
+
+/* -------------------------------------------------------------------------
+ * Going back
+ * ---------------------------------------------------------------------- */
+
+/**
+ * The label on the back control. Deliberately one word: it sits in the
+ * chrome beside the name plate, not in the choice panel, and anything
+ * longer starts to read as a thing the receptionist said.
+ */
+export const BACK_LABEL = 'Back';
+
+/**
+ * The order in which the graph collects its four answers.
+ *
+ * `need` covers all seven need nodes: which one a visitor saw is a
+ * consequence of their Interest, not a separate answer.
+ */
+const ANSWER_STAGES = ['interest', 'need', 'timeline', 'intent'] as const;
+
+function stageOf(nodeId: NodeId): number {
+  if (nodeId === 'interest') return 0;
+  if (nodeId.startsWith('need.')) return 1;
+  if (nodeId === 'timeline') return 2;
+  if (nodeId === 'intent') return 3;
+  // `checkin` and `cta` own no answer. Returning the length means
+  // `clearAnswersFrom` clears nothing, which is the right behaviour for a
+  // node that never set anything.
+  return ANSWER_STAGES.length;
+}
+
+/**
+ * Stepping back to a node discards its answer and every answer after it.
+ *
+ * Not tidiness — correctness. A visitor who steps back from `timeline` to
+ * `interest` and picks a different Interest is shown a different need node;
+ * without this the need option from the ABANDONED branch would still be on
+ * the payload, and routing (spec §9) keys off exactly that option. The lead
+ * would be sent to a BU chosen by a question the visitor retracted.
+ *
+ * Clearing forward rather than only the current answer is what makes it
+ * safe: the visitor re-walks the tree from wherever they rejoined it.
+ */
+export function clearAnswersFrom(answers: Answers, nodeId: NodeId): Answers {
+  const from = stageOf(nodeId);
+  return {
+    interest: from <= 0 ? null : answers.interest,
+    need: from <= 1 ? null : answers.need,
+    timeline: from <= 2 ? null : answers.timeline,
+    intent: from <= 3 ? null : answers.intent,
+  };
 }

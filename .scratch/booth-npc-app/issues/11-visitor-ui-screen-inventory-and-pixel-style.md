@@ -231,3 +231,16 @@ the deck is at risk; new copy still has generous headroom.
 **Owed at rehearsal:** re-measure the true per-line character count on a
 real 360px phone. Ticket 18's budget-Android legibility check now reads
 "Silkscreen at 0.9rem", not "Press Start 2P at 10.5px".
+
+### Background art replaced during build, 2026-08-31
+
+Source art is now `Game Assets/FinalUpdatedbackground.png` (1200×2400), pipelined to a 97 KB WebP at 1080×2160. Spec §4 updated.
+
+**The signboards behind the receptionist are blank in the new art.** The tone mismatch handed over from ticket 05 — retail signage reading Priority Banking / Wealth Management while the conversation asks about treasury and cross-border collections — **no longer exists**. It was resolved by the art itself rather than by the composition.
+
+Two knock-ons:
+
+- The `object-position: 50% 22%` crop was partly justified as hiding that signage. That justification is void; the value is now a pure composition choice and should be re-checked visually per device at rehearsal.
+- Ticket 13 was told the crop relieved it of working around the signage. Still true, but for a different reason — there is nothing to work around.
+
+The new art also carries roughly 40% empty floor at the bottom, which suits the overlay composition better than the old art: the chrome now sits over floor rather than over the desk.

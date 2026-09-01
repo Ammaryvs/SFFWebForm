@@ -3,7 +3,7 @@
  *
  * Two files, and only two, are ever downloaded by a visitor's phone:
  *
- *   - the background, re-encoded to WebP (~650 KB JPG -> ~250 KB)
+ *   - the background, re-encoded to WebP (4.0 MB PNG -> ~100 KB)
  *   - the Silkscreen webfont
  *
  * The other three files in `Game Assets/` are reference only: a flat JPG
@@ -22,7 +22,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 const ROOT = process.cwd();
-const SOURCE_BG = join(ROOT, 'Game Assets', 'Background Screen.jpg');
+const SOURCE_BG = join(ROOT, 'Game Assets', 'FinalUpdatedbackground.png');
 const OUT_IMG = join(ROOT, 'public', 'assets', 'background.webp');
 const OUT_FONT = join(ROOT, 'public', 'fonts', 'silkscreen.woff2');
 

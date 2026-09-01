@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ALL_NODES,
   ALL_NPC_LINES,
+  BACK_LABEL,
   CHOICE_LABEL_BUDGET,
   EXIT_OPTION,
   INTEREST_NODE,
@@ -9,10 +10,15 @@ import {
   NEED_NODES,
   NPC_LINE_BUDGET,
   TIMELINE_NODE,
+  SPEECH_TAP_HINT,
+  THANKS_BEATS,
+  WELCOME_BEATS,
+  clearAnswersFrom,
   needNodeIdFor,
   needOptionIds,
   nextNodeId,
 } from './graph';
+import type { Answers } from './types';
 
 describe('the node graph — shape (spec §5)', () => {
   it('offers the seven Interests', () => {
@@ -121,6 +127,51 @@ describe('the node graph — copy budget (spec §4)', () => {
   });
 });
 
+describe("the receptionist's spoken screens (spec §4)", () => {
+  const ALL_SPEECH = [...WELCOME_BEATS, ...THANKS_BEATS];
+  const ALL_SPEECH_LINES = ALL_SPEECH.flat();
+
+  it('keeps every spoken line inside the NPC line budget', () => {
+    for (const line of ALL_SPEECH_LINES) {
+      expect(
+        line.length,
+        `"${line}" is ${line.length} chars`,
+      ).toBeLessThanOrEqual(NPC_LINE_BUDGET);
+    }
+  });
+
+  it('keeps every beat to a boxful', () => {
+    // The dialogue box holds three lines at the NPC budget (spec §4). A
+    // fourth would either overflow the box or shrink the type.
+    for (const beat of ALL_SPEECH) {
+      expect(beat.length, beat.join(' / ')).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('keeps the tap hint inside the choice label budget', () => {
+    expect(SPEECH_TAP_HINT.length).toBeLessThanOrEqual(CHOICE_LABEL_BUDGET);
+  });
+
+  it('asks the visitor nothing', () => {
+    // These are the screens with no choice panel: a question in the copy
+    // would leave the visitor looking for options that are not there.
+    for (const line of ALL_SPEECH_LINES) {
+      expect(line, `"${line}" asks a question`).not.toContain('?');
+    }
+  });
+
+  it('greets without promising anything about the visitor’s data', () => {
+    // The data promise is the versioned consent block on check-in. A
+    // friendlier restatement here would be a second, looser promise.
+    const spoken = ALL_SPEECH_LINES.join(' ').toLowerCase();
+    for (const word of ['privacy', 'consent', 'data', 'secure', 'safe']) {
+      expect(spoken, `speech mentions "${word}"`).not.toMatch(
+        new RegExp(`\b${word}\b`),
+      );
+    }
+  });
+});
+
 describe('the node graph — visitor-facing prohibitions (spec §6)', () => {
   const forbidden = [
     'qualify',
@@ -139,9 +190,12 @@ describe('the node graph — visitor-facing prohibitions (spec §6)', () => {
 
   it('never shows qualification language or a BU name', () => {
     const visitorCopy = [
+      ...WELCOME_BEATS.flat(),
+      ...THANKS_BEATS.flat(),
       ...ALL_NODES.map((n) => n.line),
       ...ALL_NODES.flatMap((n) => n.options.map((o) => o.label)),
       EXIT_OPTION.label,
+      BACK_LABEL,
     ]
       .join(' \n ')
       .toLowerCase();
@@ -151,5 +205,70 @@ describe('the node graph — visitor-facing prohibitions (spec §6)', () => {
         new RegExp(`\\b${word}\\b`),
       );
     }
+  });
+});
+
+describe('the node graph — stepping back', () => {
+  const full: Answers = {
+    interest: 'interest.growing',
+    need: 'need.growing.asean',
+    timeline: 'timeline.immediate',
+    intent: 'intent.actively_looking',
+  };
+
+  it('discards the answer of the node stepped back to, and every one after', () => {
+    expect(clearAnswersFrom(full, 'interest')).toEqual({
+      interest: null,
+      need: null,
+      timeline: null,
+      intent: null,
+    });
+
+    expect(clearAnswersFrom(full, 'need.growing')).toEqual({
+      interest: 'interest.growing',
+      need: null,
+      timeline: null,
+      intent: null,
+    });
+
+    expect(clearAnswersFrom(full, 'timeline')).toEqual({
+      interest: 'interest.growing',
+      need: 'need.growing.asean',
+      timeline: null,
+      intent: null,
+    });
+
+    expect(clearAnswersFrom(full, 'intent')).toEqual({
+      interest: 'interest.growing',
+      need: 'need.growing.asean',
+      timeline: 'timeline.immediate',
+      intent: null,
+    });
+  });
+
+  it('leaves an abandoned branch no way to reach the payload', () => {
+    // The failure this exists to prevent: change your Interest, and the
+    // need option from the branch you left must not survive to routing.
+    const reconsidered = clearAnswersFrom(full, 'interest');
+    expect(reconsidered.need).toBeNull();
+  });
+
+  it('clears nothing for a node that owns no answer', () => {
+    expect(clearAnswersFrom(full, 'cta')).toEqual(full);
+    expect(clearAnswersFrom(full, 'checkin')).toEqual(full);
+  });
+
+  it('is total on partly-answered state', () => {
+    const partial: Answers = {
+      interest: 'interest.just_exploring',
+      need: null,
+      timeline: null,
+      intent: null,
+    };
+    expect(clearAnswersFrom(partial, 'timeline')).toEqual(partial);
+  });
+
+  it('offers a back label short enough for the chrome', () => {
+    expect(BACK_LABEL.length).toBeLessThanOrEqual(CHOICE_LABEL_BUDGET);
   });
 });

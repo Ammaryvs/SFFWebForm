@@ -93,14 +93,19 @@ Both screens show real names and company emails behind one shared secret. That t
 
 **Composition: full-bleed background with all chrome overlaid at the bottom**, matching `Dialog Example.jpg`. One composition on every screen; nothing switches layout mid-conversation.
 
-- Background: `object-fit: cover`, `object-position: 50% 22%`. This keeps the receptionist centred **and crops the retail signage** (Priority Banking / Wealth Management) largely out of frame, which matters — the conversation asks about treasury and cross-border collections, and prominent wealth-management signage would clash.
+- Background: `object-fit: cover`, `object-position: 50% 22%`. This keeps the receptionist centred.
 - Chrome sits over a dark upward gradient: name plate, dialogue box, choice panel, or the check-in / CTA card.
+
+> **Art replaced during build, 2026-08-31.** The source is now `Game Assets/FinalUpdatedbackground.png` (1200×2400), replacing `Background Screen.jpg`. Two consequences:
+>
+> - **The signboards behind the receptionist are now blank.** The crop was previously justified as hiding the Priority Banking / Wealth Management signage, which clashed with a conversation about treasury and cross-border collections. **That tension no longer exists in the art**, so the crop is now purely a composition choice and `50% 22%` is free to change on visual grounds alone.
+> - **The new art has roughly the bottom 40% as empty floor**, which suits the overlay composition better than the old art did — the chrome now sits over floor rather than over the desk. On tall phones the image fits vertically with no crop at all; the 22% only bites on shorter screens such as the iPhone SE. **Worth one visual check per device at rehearsal (§16)** rather than assuming the old value is still optimal.
 
 ### Assets — only one of the four is an image
 
 | File | Role |
 | --- | --- |
-| `Background Screen.jpg` | **The only file rendered as an image.** Re-encode to WebP (~650 KB → ~250 KB). |
+| `FinalUpdatedbackground.png` | **The only file rendered as an image.** 4.0 MB PNG → **97 KB WebP** at 1080×2160, via `npm run assets`. Supersedes `Background Screen.jpg`, which is retained as reference. |
 | `Dialog Interface.jpg` | **Reference only** — rebuild the frame in CSS |
 | `Dialog Example.jpg` | **Reference only** — populated example for type, colour and choice styling |
 | `Contact Detail Form.jpg` | **Reference only** — and its field list is wrong; see §7 |
